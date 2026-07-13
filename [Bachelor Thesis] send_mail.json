@@ -1,0 +1,600 @@
+{
+  "name": "[Bachelor Thesis] send_mail",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "Name"
+            },
+            {
+              "name": "Matrikelnummer"
+            },
+            {
+              "name": "EMail"
+            },
+            {
+              "name": "Anliegen"
+            },
+            {
+              "name": "run_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "99d1a131-0541-421e-be39-043077bfac3c",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "={{ $json.run_id }}",
+            "ts": "={{ $now }}",
+            "tool": "send_mail",
+            "status": "started",
+            "label": "=Schreibe E-Mail",
+            "message": "=Name: {{ $json.Name }}\nMatrikelnummer: {{ $json.Matrikelnummer }}\nE-Mail: {{ $json.EMail }}\n\n{{ $json.Anliegen }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "acbe3fc0-4cc5-47ee-b64d-f127d84afd49",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        272
+      ],
+      "id": "4229ba5c-ad62-48d0-b8e1-a0b6176b3566",
+      "name": "Wait",
+      "webhookId": "0b039809-892b-420b-a01a-c73b10c2d34a"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "runId",
+              "keyValue": "={{ $('When Executed by Another Workflow').item.json.run_id }}"
+            },
+            {
+              "keyName": "message",
+              "keyValue": "={{ $json.message }}"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "ts"
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        208
+      ],
+      "id": "0e424110-ebd9-4351-8245-c79ea4bd6a93",
+      "name": "Get row(s)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "errorMessage": "User declined to send the mail"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        352
+      ],
+      "id": "e10d432f-43b7-407d-8c84-37dbc8c476f1",
+      "name": "Stop and Error"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "=confirmed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3283fffc-08a0-4719-829d-0373f69c79b3"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "confirmed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "bca70325-3e16-4939-9695-0eef27bcd0ef",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "declined",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "declined"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "889a12b0-ac2c-438f-8d2e-80aa2159b021",
+                    "leftValue": "{{ $json.status }}",
+                    "rightValue": "started",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "waiting"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        256
+      ],
+      "id": "b165ef64-0872-4264-a8e9-bcb2a7680ead",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "={{ $('When Executed by Another Workflow').item.json.run_id }}",
+            "ts": "={{ $now }}",
+            "tool": "send_mail",
+            "status": "finished",
+            "label": "=Schreibe E-Mail",
+            "message": "=E-Mail gesendet"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1568,
+        -96
+      ],
+      "id": "99d17d30-65a5-4a6f-b928-bfc72bee5c7d",
+      "name": "Insert row1"
+    },
+    {
+      "parameters": {
+        "fromEmail": "felix.salzer@salzer-siegel.de",
+        "toEmail": "felix.salzer@salzer-siegel.de",
+        "subject": "Neue Anfrage über Chatbot",
+        "emailFormat": "text",
+        "text": "={{ $json.message }}",
+        "options": {
+          "appendAttribution": false,
+          "replyTo": "={{ $('When Executed by Another Workflow').item.json.EMail }}"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1344,
+        -96
+      ],
+      "id": "94ffedcb-8822-48c4-877f-287af9b9e1ab",
+      "name": "Send an Email",
+      "webhookId": "8db67b47-d1a1-44a5-b350-7ee8c1f96517",
+      "credentials": {
+        "smtp": {
+          "id": "5LgyjxzxxvukxvfS",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "abc5bd61-a553-4d74-a601-b20ea5fbfc8f",
+      "name": "Wait1",
+      "webhookId": "4f52f306-5402-4d00-9208-a3effcb2c607"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0222726a-58f9-4c1c-9632-1ff026cd572e",
+              "name": "result",
+              "value": "email send successfull",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        -96
+      ],
+      "id": "32b76eb7-4e9e-429a-a8ce-928e9021df0b",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "Name": "Felix Salzer",
+          "Matrikelnummer": 1234596,
+          "EMail": "juc50lida@studserv.uni-leipzig.de",
+          "Anliegen": "Der Studierende (Felix Salzer, Matr.-Nr. 1234596) studiert B.Sc. Wirtschaftsinformatik nach aktueller Prüfungsordnung und ist unsicher, ob die in der PO geregelte Bestehensgrenze für Multiple-Choice-/Antwort-Wahl-Verfahren auf seine konkrete Klausur/Prüfungsleistung anwendbar ist. Die konkrete Klausur kann er aktuell nicht benennen. Bitte um kurze Rückmeldung, ob für ihn (aktuelle PO) die Regel aus § 7 Abs. 5 PO B.Sc. Wirtschaftsinformatik gilt (mind. 60% bzw. Gleitklausel mit mind. 50%), und welche Informationen ggf. noch benötigt werden, um die konkrete Prüfung zuzuordnen.",
+          "run_id": "6cf96a9f-3e9c-45b9-8c3e-8920592d7041"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send an Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send an Email": {
+      "main": [
+        [
+          {
+            "node": "Insert row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": 120,
+    "availableInMCP": false
+  },
+  "versionId": "27469aa7-180d-4358-b1f2-aee48f402b56",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6a7b881ade4545f866bb38261d89cddf192ea2c5a322b33693d83b5530b97257"
+  },
+  "id": "CvGr5GppPliBXvQp",
+  "tags": [
+    {
+      "updatedAt": "2026-04-23T21:15:21.304Z",
+      "createdAt": "2026-04-23T21:15:21.304Z",
+      "id": "d8B3KIvR1KycdzZV",
+      "name": "Tool"
+    }
+  ]
+}

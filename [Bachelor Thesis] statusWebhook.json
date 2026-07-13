@@ -1,0 +1,174 @@
+{
+  "name": "[Bachelor Thesis] statusWebhook",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "chat-status",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7386c42d-97d1-4054-b4fe-db5a77db837d",
+      "name": "Webhook",
+      "webhookId": "6ddfa2de-c2be-47bf-ba55-87f13d8d6f35"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "runId",
+              "condition": "like",
+              "keyValue": "={{ $json.query.runId }}"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "ts"
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b4a1f9e4-3963-413c-a2b8-7ccd715da5c7",
+      "name": "Get row(s)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fa131b94-a497-4d0d-925f-e535a7e54b09",
+              "name": "runId",
+              "value": "={{ $json.runId }}",
+              "type": "string"
+            },
+            {
+              "id": "7c6912d0-11fb-4e46-9142-b208d4bca13e",
+              "name": "ts",
+              "value": "={{ $json.ts }}",
+              "type": "string"
+            },
+            {
+              "id": "bb506aa0-9221-4376-b9a7-95ad43ca0f32",
+              "name": "tool",
+              "value": "={{ $json.tool }}",
+              "type": "string"
+            },
+            {
+              "id": "6cece7a9-67c3-47a1-b6d5-6c0d0cd05015",
+              "name": "label",
+              "value": "={{ $json.label }}",
+              "type": "string"
+            },
+            {
+              "id": "dabbd92c-fe2a-4512-a220-c12d7afd828b",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "0b33016c-388a-472c-944b-51652e858e7f",
+              "name": "message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "0f582ea3-366f-43b6-8398-5ae7f05d8d0d",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n-1.salzer-siegel.de",
+            "user-agent": "node",
+            "accept": "application/json, text/plain",
+            "accept-encoding": "br, gzip, deflate",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "via": "1.1 Caddy",
+            "x-forwarded-for": "80.187.98.113",
+            "x-forwarded-host": "n8n-1.salzer-siegel.de",
+            "x-forwarded-proto": "https"
+          },
+          "params": {},
+          "query": {
+            "sessionId": "085d8ec9-298f-428a-b8a4-cc6323a9518c",
+            "run_id": "c88ae940-461f-497d-8c3b-fda45f431630",
+            "runId": "c88ae940-461f-497d-8c3b-fda45f431630"
+          },
+          "body": {},
+          "webhookUrl": "https://n8n-1.salzer-siegel.de/webhook/chat-status",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "25e32a7f-2699-47d7-b037-dc2204381120",
+  "meta": {
+    "instanceId": "6a7b881ade4545f866bb38261d89cddf192ea2c5a322b33693d83b5530b97257"
+  },
+  "id": "CEq6axEvq2sdu11N",
+  "tags": []
+}

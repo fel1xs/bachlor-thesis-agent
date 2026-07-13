@@ -1,0 +1,114 @@
+{
+  "name": "[Bachelor Thesis] get_document_image",
+  "nodes": [
+    {
+      "parameters": {
+        "endpointUrl": "https://api.pageindex.ai/mcp",
+        "authentication": "bearerAuth",
+        "tool": {
+          "__rl": true,
+          "value": "get_document_image",
+          "mode": "list",
+          "cachedResultName": "get_document_image"
+        },
+        "parameters": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "image_path": "={{ $json.image_path }}"
+          },
+          "matchingColumns": [
+            "image_path"
+          ],
+          "schema": [
+            {
+              "id": "image_path",
+              "displayName": "image_path",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        64
+      ],
+      "id": "3b49a2e4-61dd-450d-ab1e-f68e66bf75a3",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "auVJ09lFrvPIkASK",
+          "name": "PageIndex"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "image_path"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        64
+      ],
+      "id": "59cd16ca-c4d2-449d-8753-e7379d231795",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "image_path": "Prüfung"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "MCP Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "48032a81-0b9f-4e6b-aced-538f2364085a",
+  "meta": {
+    "instanceId": "6a7b881ade4545f866bb38261d89cddf192ea2c5a322b33693d83b5530b97257"
+  },
+  "id": "qEMYbfrPVQjdKCoE",
+  "tags": [
+    {
+      "updatedAt": "2026-04-23T21:15:21.304Z",
+      "createdAt": "2026-04-23T21:15:21.304Z",
+      "id": "d8B3KIvR1KycdzZV",
+      "name": "Tool"
+    }
+  ]
+}

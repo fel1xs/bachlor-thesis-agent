@@ -1,0 +1,146 @@
+{
+  "name": "[Bachelor Thesis] find_relevant_documents",
+  "nodes": [
+    {
+      "parameters": {
+        "endpointUrl": "https://api.pageindex.ai/mcp",
+        "authentication": "bearerAuth",
+        "tool": {
+          "__rl": true,
+          "value": "find_relevant_documents",
+          "mode": "list",
+          "cachedResultName": "find_relevant_documents"
+        },
+        "parameters": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "query",
+              "displayName": "query",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "name_or_description_filter",
+              "displayName": "name_or_description_filter",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "folder_id",
+              "displayName": "folder_id",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "cursor",
+              "displayName": "cursor",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "limit",
+              "displayName": "limit",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "number",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        64
+      ],
+      "id": "adf116eb-2404-4091-91ff-c8465013a0e7",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "auVJ09lFrvPIkASK",
+          "name": "PageIndex"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        64
+      ],
+      "id": "2b6a856d-e732-46ec-9610-30180bcdcead",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "Prüfung"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "MCP Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3b624134-baac-4a52-bc18-69e558988e20",
+  "meta": {
+    "instanceId": "6a7b881ade4545f866bb38261d89cddf192ea2c5a322b33693d83b5530b97257"
+  },
+  "id": "fuDft7sGQkasXoyJ",
+  "tags": [
+    {
+      "updatedAt": "2026-04-23T21:15:21.304Z",
+      "createdAt": "2026-04-23T21:15:21.304Z",
+      "id": "d8B3KIvR1KycdzZV",
+      "name": "Tool"
+    }
+  ]
+}

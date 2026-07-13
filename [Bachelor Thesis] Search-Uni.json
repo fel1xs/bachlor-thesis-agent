@@ -1,0 +1,564 @@
+{
+  "name": "[Bachelor Thesis] Search-Uni",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "query"
+            },
+            {
+              "name": "run_id"
+            }
+          ]
+        }
+      },
+      "id": "27195c8b-cd6b-4783-a9cc-cc6e5c98fde3",
+      "typeVersion": 1.1,
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        832,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.uni-leipzig.de/suche",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "mksearch[term]",
+              "value": "={{ $('When Executed by Another Workflow').item.json.query }}"
+            },
+            {
+              "name": "mksearch[submit]",
+              "value": "Suche+starten"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "de-DE,de;q=0.9,en-US;q=0.8,en;q=0.7"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1328,
+        352
+      ],
+      "id": "6918a809-73ef-45ce-8af5-c43138bb5f2c",
+      "name": "HTTP Request",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html =  $input.first().json.data || '';\n\nconst baseUrl = 'https://www.uni-leipzig.de';\n\nfunction decodeHtml(str = '') {\n  return str\n    .replace(/&nbsp;/gi, ' ')\n    .replace(/&amp;/gi, '&')\n    .replace(/&quot;/gi, '\"')\n    .replace(/&#39;/gi, \"'\")\n    .replace(/&bdquo;/gi, '„')\n    .replace(/&ldquo;/gi, '“')\n    .replace(/&rdquo;/gi, '”')\n    .replace(/&ndash;/gi, '–')\n    .replace(/&mdash;/gi, '—')\n    .replace(/&hellip;/gi, '…')\n    .replace(/&#8729;/gi, '·')\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<em>([\\s\\S]*?)<\\/em>/gi, '$1')\n    .replace(/<strong>([\\s\\S]*?)<\\/strong>/gi, '$1')\n    .replace(/<span\\b[^>]*class=[\"'][^\"']*\\bhidden\\b[^\"']*[\"'][^>]*>[\\s\\S]*?<\\/span>/gi, '')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction makeAbsoluteUrl(url = '') {\n  if (!url) return '';\n  if (url === '#') return '';\n  if (/^https?:\\/\\//i.test(url)) return url;\n  if (url.startsWith('/')) return baseUrl + url;\n  return baseUrl + '/' + url;\n}\n\nfunction extractMainContent(str) {\n  const start = str.search(/<main\\b[^>]*id=[\"']content[\"'][^>]*>/i);\n  if (start === -1) return str;\n  const after = str.slice(start);\n  const endRel = after.search(/<\\/main>/i);\n  return endRel === -1 ? after : after.slice(0, endRel + 7);\n}\n\nfunction findMatchingDivEnd(str, openStart) {\n  const tagRegex = /<\\/?div\\b[^>]*>/gi;\n  tagRegex.lastIndex = openStart;\n  let depth = 0;\n  let m;\n\n  while ((m = tagRegex.exec(str)) !== null) {\n    const tag = m[0];\n    const isClosing = /^<\\/div/i.test(tag);\n\n    if (!isClosing) {\n      depth += 1;\n    } else {\n      depth -= 1;\n      if (depth === 0) {\n        return tagRegex.lastIndex;\n      }\n    }\n  }\n\n  return -1;\n}\n\nfunction extractDivAt(str, startIndex) {\n  const endIndex = findMatchingDivEnd(str, startIndex);\n  if (endIndex === -1) return '';\n  return str.slice(startIndex, endIndex);\n}\n\nfunction getAttr(tag, name) {\n  const m = tag.match(new RegExp(`${name}=[\"']([^\"']+)[\"']`, 'i'));\n  return m ? m[1] : '';\n}\n\nfunction getSectionBlocks(mainHtml) {\n  const sections = [];\n  const sectionRegex = /<section\\b[^>]*class=[\"'][^\"']*\\btx_mksearch\\b[^\"']*[\"'][^>]*>/gi;\n  let match;\n\n  while ((match = sectionRegex.exec(mainHtml)) !== null) {\n    const sectionStart = match.index;\n    const after = mainHtml.slice(sectionStart);\n    const endRel = after.search(/<\\/section>/i);\n    if (endRel === -1) continue;\n\n    const sectionHtml = after.slice(0, endRel + 10);\n\n    const catMatch = sectionHtml.match(\n      /<div\\b[^>]*class=[\"'][^\"']*\\bcontentsection\\b[^\"']*[\"'][^>]*data-name=[\"']([^\"']+)[\"'][^>]*>/i\n    );\n    if (!catMatch) continue;\n\n    const category = decodeHtml(catMatch[1]);\n\n    const resultsOpenMatch = sectionHtml.match(\n      /<div\\b[^>]*class=[\"'][^\"']*\\bresults\\b[^\"']*[\"'][^>]*>/i\n    );\n    if (!resultsOpenMatch) continue;\n\n    const resultsOpenIndex = sectionHtml.search(\n      /<div\\b[^>]*class=[\"'][^\"']*\\bresults\\b[^\"']*[\"'][^>]*>/i\n    );\n    if (resultsOpenIndex === -1) continue;\n\n    const resultsHtml = extractDivAt(sectionHtml, resultsOpenIndex);\n\n    sections.push({\n      kategorie: category,\n      html: resultsHtml\n    });\n  }\n\n  return sections;\n}\n\nfunction getAllTopLevelBlocksByClass(containerHtml, className) {\n  const blocks = [];\n  const openRegex = new RegExp(\n    `<div\\\\b[^>]*class=[\"'][^\"']*\\\\b${className}\\\\b[^\"']*[\"'][^>]*>`,\n    'gi'\n  );\n\n  let match;\n  while ((match = openRegex.exec(containerHtml)) !== null) {\n    const start = match.index;\n    const block = extractDivAt(containerHtml, start);\n    if (block) {\n      blocks.push(block);\n      openRegex.lastIndex = start + block.length;\n    }\n  }\n\n  return blocks;\n}\n\nfunction parsePagesNewsDocs(category, resultsHtml) {\n  const blocks = getAllTopLevelBlocksByClass(resultsHtml, 'searchresult');\n  const out = [];\n\n  for (const block of blocks) {\n    const titleMatch = block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    const titel = decodeHtml(titleMatch ? titleMatch[1] : '');\n\n    const pMatches = [...block.matchAll(/<p\\b[^>]*>([\\s\\S]*?)<\\/p>/gi)]\n      .map(m => decodeHtml(m[1]))\n      .filter(Boolean);\n\n    const inhalt = pMatches.join(' ').replace(/\\s+/g, ' ').trim();\n\n    const links = [...block.matchAll(/<a\\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>/gi)]\n      .map(m => m[1])\n      .map(makeAbsoluteUrl)\n      .filter(Boolean);\n\n    // Für \"Seiten\" nicht den Breadcrumb-Link \"/\" nehmen, sondern bevorzugt readon/filelink/etc.\n    let link = '';\n    if (/Seiten|Nachrichten|Dokumente/i.test(category)) {\n      const preferred = block.match(\n        /<a\\b[^>]*class=[\"'][^\"']*\\b(readon|filelink)\\b[^\"']*[\"'][^>]*href=[\"']([^\"']+)[\"'][^>]*>/i\n      );\n      if (preferred) {\n        link = makeAbsoluteUrl(preferred[2]);\n      }\n    }\n    if (!link && links.length) {\n      link = links[links.length - 1];\n    }\n\n    if (titel || link || inhalt) {\n      out.push({ kategorie: category, titel, link, inhalt });\n    }\n  }\n\n  return out;\n}\n\nfunction parseContacts(category, resultsHtml) {\n  const blocks = getAllTopLevelBlocksByClass(resultsHtml, 'contactTeaser');\n  const out = [];\n\n  for (const block of blocks) {\n    const titleMatch = block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    const titel = decodeHtml(titleMatch ? titleMatch[1] : '');\n\n    const descMatch = block.match(/<span\\b[^>]*class=[\"'][^\"']*\\bdescription\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);\n    const desc = decodeHtml(descMatch ? descMatch[1] : '');\n\n    const orgMatch = block.match(/<span\\b[^>]*class=[\"'][^\"']*\\borg\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);\n    const org = decodeHtml(orgMatch ? orgMatch[1] : '');\n\n    const addressMatch = block.match(/<p\\b[^>]*class=[\"'][^\"']*\\baddress\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/p>/i);\n    const address = decodeHtml(addressMatch ? addressMatch[1] : '');\n\n    const telMatch = block.match(/Telefon:\\s*[\\s\\S]*?<span\\b[^>]*class=[\"'][^\"']*\\bvalue\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);\n    const tel = decodeHtml(telMatch ? telMatch[1] : '');\n\n    const profileMatch = block.match(/<a\\b[^>]*href=[\"']([^\"']*\\/personenprofil[^\"']*)[\"'][^>]*>[\\s\\S]*?Zum Profil[\\s\\S]*?<\\/a>/i);\n    const websiteMatch = block.match(/<a\\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>[\\s\\S]*?Webseite[\\s\\S]*?<\\/a>/i);\n\n    let link = '';\n    if (profileMatch) link = makeAbsoluteUrl(profileMatch[1]);\n    else if (websiteMatch) link = makeAbsoluteUrl(websiteMatch[1]);\n\n    const inhalt = [desc, org, address, tel].filter(Boolean).join(' | ');\n\n    if (titel || link || inhalt) {\n      out.push({ kategorie: category, titel, link, inhalt });\n    }\n  }\n\n  return out;\n}\n\nfunction parseEstablishments(category, resultsHtml) {\n  const blocks = getAllTopLevelBlocksByClass(resultsHtml, 'contactTeaser');\n  const out = [];\n\n  for (const block of blocks) {\n    const titleMatch = block.match(/<h3\\b[^>]*>([\\s\\S]*?)<\\/h3>/i);\n    const titel = decodeHtml(titleMatch ? titleMatch[1] : '');\n\n    const addressMatch = block.match(/<p\\b[^>]*class=[\"'][^\"']*\\baddress\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/p>/i);\n    const address = decodeHtml(addressMatch ? addressMatch[1] : '');\n\n    const telMatch = block.match(/Telefon:\\s*[\\s\\S]*?<span\\b[^>]*class=[\"'][^\"']*\\bvalue\\b[^\"']*[\"'][^>]*>([\\s\\S]*?)<\\/span>/i);\n    const tel = decodeHtml(telMatch ? telMatch[1] : '');\n\n    const websiteMatch = block.match(/<a\\b[^>]*href=[\"']([^\"']+)[\"'][^>]*>[\\s\\S]*?Webseite[\\s\\S]*?<\\/a>/i);\n    const link = websiteMatch ? makeAbsoluteUrl(websiteMatch[1]) : '';\n\n    const inhalt = [address, tel].filter(Boolean).join(' | ');\n\n    if (titel || link || inhalt) {\n      out.push({ kategorie: category, titel, link, inhalt });\n    }\n  }\n\n  return out;\n}\n\nconst mainHtml = extractMainContent(html);\nconst sectionBlocks = getSectionBlocks(mainHtml);\n\nlet results = [];\n\nfor (const section of sectionBlocks) {\n  const k = section.kategorie;\n\n  if (/Kontakte/i.test(k)) {\n    results.push(...parseContacts(k, section.html));\n  } else if (/Einrichtung|Einrichtungen/i.test(k)) {\n    results.push(...parseEstablishments(k, section.html));\n  } else {\n    results.push(...parsePagesNewsDocs(k, section.html));\n  }\n}\n\nresults = results.filter(r => r.titel || r.link || r.inhalt);\n\nconst seen = new Set();\nresults = results.filter(r => {\n  const key = `${r.kategorie}|${r.titel}|${r.link}|${r.inhalt}`;\n  if (seen.has(key)) return false;\n  seen.add(key);\n  return true;\n});\n\nreturn [\n  {\n    json: {\n      query: $('When Executed by Another Workflow').first().json.query || '',\n      resultCount: results.length,\n      results\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        256
+      ],
+      "id": "0fcb402d-426d-484e-8b44-e8fd7b7e2f03",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const query =  $input.first().json.query || '';\nconst results = $input.first().json.results || [];\n\nconst searchContext = results\n  .map((r, i) => {\n    return [\n      `Treffer ${i + 1}`,\n      `Kategorie: ${r.kategorie || ''}`,\n      `Titel: ${r.titel || ''}`,\n      `Link: ${r.link || ''}`,\n      `Inhalt: ${r.inhalt || ''}`\n    ].join('\\n');\n  })\n  .join('\\n\\n---\\n\\n');\n\nreturn [\n  {\n    json: {\n      query,\n      resultCount: results.length,\n      searchContext\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1776,
+        256
+      ],
+      "id": "dade9b5b-c34c-4968-81d4-096473f8db72",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "={{ $json.run_id }}",
+            "ts": "={{ $now }}",
+            "tool": "search_web",
+            "status": "started",
+            "label": "=Durchsuche die Webseiten der Universität Leipzig"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        352
+      ],
+      "id": "f9f40db3-de1d-4d91-ac22-95b356f878be",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "={{ $('When Executed by Another Workflow').item.json.run_id }}",
+            "ts": "={{ $now }}",
+            "tool": "search_web",
+            "status": "finished",
+            "label": "=Durchsuche die Webseiten der Universität Leipzig",
+            "message": "=Webseiten der Universität Leipzig nach {{ $('When Executed by Another Workflow').item.json.query }} durchsucht"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        256
+      ],
+      "id": "e8361cbe-27fa-4098-beb7-88e9cd0513d8",
+      "name": "Insert row1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f5921ccc-28ef-4395-a813-ab9ae9de1b30",
+              "name": "query",
+              "value": "={{ $('Code in JavaScript1').item.json.query }}",
+              "type": "string"
+            },
+            {
+              "id": "f6895abe-3bf7-49d5-ae65-4ed13f232c60",
+              "name": "resultCount",
+              "value": "={{ $('Code in JavaScript1').item.json.resultCount }}",
+              "type": "number"
+            },
+            {
+              "id": "a5eb0706-f730-401d-b3b1-a0f968776bf5",
+              "name": "searchContext",
+              "value": "={{ $('Code in JavaScript1').item.json.searchContext }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2224,
+        256
+      ],
+      "id": "27da65c9-8cd7-4873-8afe-636fcb2eace6",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "={{ $('When Executed by Another Workflow').item.json.run_id }}",
+            "ts": "={{ $now }}",
+            "tool": "search_web",
+            "status": "failed",
+            "label": "=Durchsuche die Webseiten der Universität Leipzig",
+            "message": "=Webseiten der Universität Leipzig konnten nicht durchsucht werden"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1552,
+        448
+      ],
+      "id": "ffd83f65-f099-4072-b13d-f7b468032932",
+      "name": "Insert row2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ff6b9c71-37da-497c-9e3a-979486efa81a",
+              "name": "error.code",
+              "value": "={{ $('HTTP Request').item.json.error.code }}",
+              "type": "string"
+            },
+            {
+              "id": "f5b0a99f-99af-48ad-aab3-2190f5fb7150",
+              "name": "error.message",
+              "value": "={{ $('HTTP Request').item.json.error.message }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1776,
+        448
+      ],
+      "id": "4a6b47ff-89b8-4ae0-a9fe-c665376886e6",
+      "name": "Edit Fields1"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "query": "Studienbescheinigung",
+          "run_id": "30e2146d-ad67-4d1b-a0b8-d1d04543231c"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert row2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Insert row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row2": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "51cf71eb-f769-40a3-a5c8-0be35d979311",
+  "meta": {
+    "instanceId": "6a7b881ade4545f866bb38261d89cddf192ea2c5a322b33693d83b5530b97257"
+  },
+  "id": "d9yJ1uCy4sjRTRnK",
+  "tags": [
+    {
+      "updatedAt": "2026-04-23T21:15:21.304Z",
+      "createdAt": "2026-04-23T21:15:21.304Z",
+      "id": "d8B3KIvR1KycdzZV",
+      "name": "Tool"
+    }
+  ]
+}

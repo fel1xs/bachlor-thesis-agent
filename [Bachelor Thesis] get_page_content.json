@@ -1,0 +1,399 @@
+{
+  "name": "[Bachelor Thesis] get_page_content",
+  "nodes": [
+    {
+      "parameters": {
+        "endpointUrl": "https://api.pageindex.ai/mcp",
+        "authentication": "bearerAuth",
+        "tool": {
+          "__rl": true,
+          "value": "get_page_content",
+          "mode": "list",
+          "cachedResultName": "get_page_content"
+        },
+        "parameters": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "doc_name": "={{ $('When Executed by Another Workflow').item.json.doc_name }}",
+            "wait_for_completion": true,
+            "pages": "={{ $('When Executed by Another Workflow').item.json.pages }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "doc_name",
+              "displayName": "doc_name",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "folder_id",
+              "displayName": "folder_id",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "pages",
+              "displayName": "pages",
+              "defaultMatch": false,
+              "required": true,
+              "display": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "wait_for_completion",
+              "displayName": "wait_for_completion",
+              "defaultMatch": false,
+              "required": false,
+              "display": true,
+              "type": "boolean",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        128,
+        64
+      ],
+      "id": "9fa5bf61-0eb8-4395-8c85-40d71f56a195",
+      "name": "MCP Client",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "auVJ09lFrvPIkASK",
+          "name": "PageIndex"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "doc_name"
+            },
+            {
+              "name": "pages"
+            },
+            {
+              "name": "run_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        64
+      ],
+      "id": "64f038b2-f1ca-49e1-8d3c-ccb4c20d78e1",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "=",
+            "ts": "={{ $now }}",
+            "tool": "get_page_content",
+            "status": "started",
+            "label": "=Lese Studiendokument {{ $json.doc_name }} Seite(n) {{ $json.pages }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        64
+      ],
+      "id": "17962d8a-9e03-4122-bc3b-3f361c1c29c3",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "7SCedN7Z6oJHoe0x",
+          "mode": "list",
+          "cachedResultName": "chat_tool_events",
+          "cachedResultUrl": "/projects/j93tsO5HGvfs4X3J/datatables/7SCedN7Z6oJHoe0x"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "runId": "={{ $('When Executed by Another Workflow').item.json.run_id }}",
+            "ts": "={{ $now }}",
+            "tool": "get_page_content",
+            "status": "finished",
+            "label": "=Öffne Studiendokument {{ $('When Executed by Another Workflow').item.json.doc_name }} Seite(n) {{ $('When Executed by Another Workflow').item.json.pages }}",
+            "message": "={{ $('When Executed by Another Workflow').item.json.doc_name }} gelesen"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "runId",
+              "displayName": "runId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ts",
+              "displayName": "ts",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "tool",
+              "displayName": "tool",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "label",
+              "displayName": "label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        64
+      ],
+      "id": "845a0d51-c751-4296-8b02-8bd0a13b0d0d",
+      "name": "Insert row1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb669dc0-2018-4db7-9319-c78323a7f000",
+              "name": "content",
+              "value": "={{ $('MCP Client').item.json.content }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        64
+      ],
+      "id": "e19177d7-dc62-434c-b61b-484b1a57852f",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "doc_name": "AB_20_2024_bsc_winf_po.pdf",
+          "pages": "1-15",
+          "run_id": "1783083258936alb733165ve"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "MCP Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "main": [
+        [
+          {
+            "node": "Insert row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "439a28e3-8c96-4d96-8fd5-663adf31526e",
+  "meta": {
+    "instanceId": "6a7b881ade4545f866bb38261d89cddf192ea2c5a322b33693d83b5530b97257"
+  },
+  "id": "JJAjn588gO0Jeig7",
+  "tags": [
+    {
+      "updatedAt": "2026-04-23T21:15:21.304Z",
+      "createdAt": "2026-04-23T21:15:21.304Z",
+      "id": "d8B3KIvR1KycdzZV",
+      "name": "Tool"
+    }
+  ]
+}
